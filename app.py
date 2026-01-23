@@ -164,9 +164,11 @@ with col1:
     claim_type = st.selectbox(
         "Primary Claim Type",
         options=sorted(HISTORICAL_RATES.keys()),
-        help="Select the primary cause of action. Historical success rate will be used as baseline."
+        help="Select the primary cause of action. Historical success rate will automatically update.",
+        key="claim_type_selector"
     )
 
+    # Auto-update historical rate when claim type changes
     historical_rate = HISTORICAL_RATES[claim_type]
 
     st.info(f"📈 Historical success rate for **{claim_type}**: **{historical_rate:.1f}%**  \n"
@@ -174,98 +176,109 @@ with col1:
 
     st.markdown("---")
     st.markdown("## Factor Assessment")
-    st.markdown("*Rate each factor on a 0-100 scale and assign its importance weight*")
+    st.markdown("*For each factor: Set the **Strength Score** (0-100) and its **Importance Weight** (0-100)*")
 
     # Factor 1: Historical (read-only, just show weight)
-    st.markdown("### 1️⃣ Historical Success Rate")
-    col_h1, col_h2 = st.columns(2)
+    st.markdown("### 1️⃣ Historical Success Rate (Baseline)")
+    st.markdown('<div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 3px solid #667eea;">', unsafe_allow_html=True)
+    col_h1, col_h2 = st.columns([1, 1])
     with col_h1:
-        st.metric("Baseline Rate", f"{historical_rate:.1f}%")
+        st.metric("Baseline from ET Statistics", f"{historical_rate:.1f}%", help="Auto-updates when claim type changes")
     with col_h2:
         weight_H = st.slider(
-            "Weight",
+            "Importance Weight (0-100)",
             0, 100, 10,
             key="weight_h",
-            help="How much should historical rates influence prediction? Lower if case is unusual."
+            help="How much should historical rates influence prediction? Lower = case is unusual/exceptional"
         )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
     # Factor 2: Limitation Issues
     st.markdown("### 2️⃣ Limitation / Jurisdictional Issues")
     st.caption("Time bars, early conciliation, continuous employment, etc.")
+    st.markdown('<div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 3px solid #f093fb;">', unsafe_allow_html=True)
 
-    col_l1, col_l2 = st.columns(2)
-    with col_l1:
-        score_L = st.slider(
-            "Strength Score",
-            0, 100, 80,
-            key="score_l",
-            help="100 = No limitation issues. 0 = Clear time bar or jurisdictional defect."
-        )
-    with col_l2:
-        weight_L = st.slider(
-            "Weight",
-            0, 100, 30,
-            key="weight_l",
-            help="Importance of limitation issues in this case"
-        )
-
+    st.markdown("**Strength Score (0-100)**")
+    score_L = st.slider(
+        "How strong is the case on limitation?",
+        0, 100, 80,
+        key="score_l",
+        help="100 = No limitation issues. 0 = Clear time bar or jurisdictional defect.",
+        label_visibility="collapsed"
+    )
     limitation_status = "Strong" if score_L >= 70 else "Moderate" if score_L >= 40 else "Weak"
     st.progress(score_L / 100)
     st.caption(f"Status: {limitation_status} ({score_L}/100)")
+
+    st.markdown("**Importance Weight (0-100)**")
+    weight_L = st.slider(
+        "How important is limitation to this case?",
+        0, 100, 30,
+        key="weight_l",
+        help="How critical are limitation issues in determining the outcome?",
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
     # Factor 3: Legal Basis
     st.markdown("### 3️⃣ Legal Basis Strength")
     st.caption("Quality of legal arguments, precedent support, statutory interpretation")
+    st.markdown('<div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 3px solid #4facfe;">', unsafe_allow_html=True)
 
-    col_b1, col_b2 = st.columns(2)
-    with col_b1:
-        score_B = st.slider(
-            "Strength Score",
-            0, 100, 70,
-            key="score_b",
-            help="100 = Strong precedent, clear statute. 0 = Weak legal basis, adverse authority."
-        )
-    with col_b2:
-        weight_B = st.slider(
-            "Weight",
-            0, 100, 30,
-            key="weight_b",
-            help="Importance of legal arguments in this case"
-        )
-
+    st.markdown("**Strength Score (0-100)**")
+    score_B = st.slider(
+        "How strong are the legal arguments?",
+        0, 100, 70,
+        key="score_b",
+        help="100 = Strong precedent, clear statute. 0 = Weak legal basis, adverse authority.",
+        label_visibility="collapsed"
+    )
     legal_status = "Strong" if score_B >= 70 else "Moderate" if score_B >= 40 else "Weak"
     st.progress(score_B / 100)
     st.caption(f"Status: {legal_status} ({score_B}/100)")
+
+    st.markdown("**Importance Weight (0-100)**")
+    weight_B = st.slider(
+        "How important is legal basis to this case?",
+        0, 100, 30,
+        key="weight_b",
+        help="How critical are the legal arguments in determining the outcome?",
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
     # Factor 4: Evidence
     st.markdown("### 4️⃣ Evidence Quality")
     st.caption("Witness credibility, documentation, contemporaneous records, burden of proof")
+    st.markdown('<div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; border-left: 3px solid #43e97b;">', unsafe_allow_html=True)
 
-    col_e1, col_e2 = st.columns(2)
-    with col_e1:
-        score_E = st.slider(
-            "Strength Score",
-            0, 100, 60,
-            key="score_e",
-            help="100 = Strong documentary evidence, credible witnesses. 0 = No evidence, incredible witnesses."
-        )
-    with col_e2:
-        weight_E = st.slider(
-            "Weight",
-            0, 100, 30,
-            key="weight_e",
-            help="Importance of evidence in this case"
-        )
-
+    st.markdown("**Strength Score (0-100)**")
+    score_E = st.slider(
+        "How strong is the evidence?",
+        0, 100, 60,
+        key="score_e",
+        help="100 = Strong documentary evidence, credible witnesses. 0 = No evidence, incredible witnesses.",
+        label_visibility="collapsed"
+    )
     evidence_status = "Strong" if score_E >= 70 else "Moderate" if score_E >= 40 else "Weak"
     st.progress(score_E / 100)
     st.caption(f"Status: {evidence_status} ({score_E}/100)")
+
+    st.markdown("**Importance Weight (0-100)**")
+    weight_E = st.slider(
+        "How important is evidence to this case?",
+        0, 100, 30,
+        key="weight_e",
+        help="How critical is the evidence in determining the outcome?",
+        label_visibility="collapsed"
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     st.markdown("## Prediction")
@@ -306,6 +319,58 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 
+    # Show live calculation with LaTeX
+    with st.expander("📐 See Mathematical Calculation", expanded=False):
+        st.markdown("### Weighted GLM Formula")
+
+        st.latex(r"\text{Success Probability} = H + \sum_{i} w_i \cdot \frac{S_i - 50}{100}")
+
+        st.markdown("""
+        **Where:**
+        - $H$ = Historical baseline rate from ET statistics
+        - $w_i$ = Normalized weight for factor $i$
+        - $S_i$ = Strength score for factor $i$ (0-100 scale)
+        - Factor scores are centered at 50 (neutral point)
+        """)
+
+        st.markdown("---")
+        st.markdown("### Step 1: Normalize Weights")
+
+        if total_weight > 0:
+            st.latex(f"w_H = \\frac{{{weight_H}}}{{{weight_H} + {weight_L} + {weight_B} + {weight_E}}} = {w_h:.3f}")
+            st.latex(f"w_L = \\frac{{{weight_L}}}{{{weight_H} + {weight_L} + {weight_B} + {weight_E}}} = {w_l:.3f}")
+            st.latex(f"w_B = \\frac{{{weight_B}}}{{{weight_H} + {weight_L} + {weight_B} + {weight_E}}} = {w_b:.3f}")
+            st.latex(f"w_E = \\frac{{{weight_E}}}{{{weight_H} + {weight_L} + {weight_B} + {weight_E}}} = {w_e:.3f}")
+
+            st.markdown("---")
+            st.markdown("### Step 2: Calculate Factor Adjustments")
+
+            adj_L = (score_L - 50) / 100
+            adj_B = (score_B - 50) / 100
+            adj_E = (score_E - 50) / 100
+
+            st.latex(f"\\text{{Limitation adjustment}} = \\frac{{{score_L} - 50}}{{100}} = {adj_L:+.3f}")
+            st.latex(f"\\text{{Legal basis adjustment}} = \\frac{{{score_B} - 50}}{{100}} = {adj_B:+.3f}")
+            st.latex(f"\\text{{Evidence adjustment}} = \\frac{{{score_E} - 50}}{{100}} = {adj_E:+.3f}")
+
+            st.markdown("---")
+            st.markdown("### Step 3: Weighted Combination")
+
+            baseline_adj = baseline_adjustment
+            st.latex(f"\\text{{Baseline adjustment}} = {w_l:.3f} \\times {adj_L:+.3f} + {w_b:.3f} \\times {adj_B:+.3f} + {w_e:.3f} \\times {adj_E:+.3f}")
+            st.latex(f"= {baseline_adj:.3f}")
+
+            st.markdown("---")
+            st.markdown("### Step 4: Final Probability")
+
+            st.latex(f"P(\\text{{Success}}) = {historical_rate:.1f}\\% + ({baseline_adj:.3f} \\times 100)")
+            st.latex(f"= {historical_rate:.1f}\\% {baseline_adj*100:+.1f}\\%")
+            st.latex(f"= {success_prob:.1f}\\%")
+
+            st.caption("Note: Final probability is bounded between 0% and 100%")
+        else:
+            st.warning("Set at least one non-zero weight to see calculation")
+
     # Strength assessment
     if success_prob >= 70:
         strength = "Strong"
@@ -326,39 +391,45 @@ with col2:
     st.markdown("---")
 
     # Factor breakdown
-    st.markdown("### Factor Contributions")
+    st.markdown("### Factor Weights & Scores Summary")
 
     if total_weight > 0:
         factor_data = {
             'Factor': ['Historical', 'Limitation', 'Legal Basis', 'Evidence'],
-            'Weight': [w_h * 100, w_l * 100, w_b * 100, w_e * 100],
-            'Score': [historical_rate, score_L, score_B, score_E]
+            'Normalized Weight': [w_h * 100, w_l * 100, w_b * 100, w_e * 100],
+            'Strength Score': [historical_rate, score_L, score_B, score_E]
         }
 
         df_factors = pd.DataFrame(factor_data)
 
-        # Weight distribution pie chart
-        fig_weights = go.Figure(data=[go.Pie(
-            labels=df_factors['Factor'],
-            values=df_factors['Weight'],
-            hole=0.4,
-            marker_colors=['#667eea', '#f093fb', '#4facfe', '#43e97b']
-        )])
-        fig_weights.update_layout(
-            title="Weight Distribution",
-            height=300,
-            showlegend=True,
-            margin=dict(l=20, r=20, t=40, b=20)
-        )
-        st.plotly_chart(fig_weights, use_container_width=True)
+        col_pie, col_table = st.columns([1, 1])
 
-        # Factor scores
-        st.markdown("#### Factor Scores")
-        for idx, row in df_factors.iterrows():
-            st.metric(
-                row['Factor'],
-                f"{row['Score']:.0f}/100",
-                f"{row['Weight']:.0f}% weight"
+        with col_pie:
+            # Weight distribution pie chart
+            fig_weights = go.Figure(data=[go.Pie(
+                labels=df_factors['Factor'],
+                values=df_factors['Normalized Weight'],
+                hole=0.4,
+                marker_colors=['#667eea', '#f093fb', '#4facfe', '#43e97b']
+            )])
+            fig_weights.update_layout(
+                title="Normalized Weight Distribution",
+                height=300,
+                showlegend=True,
+                margin=dict(l=20, r=20, t=40, b=20)
+            )
+            st.plotly_chart(fig_weights, use_container_width=True)
+
+        with col_table:
+            # Factor table
+            st.markdown("#### Factor Summary")
+            st.dataframe(
+                df_factors.style.format({
+                    'Normalized Weight': '{:.1f}%',
+                    'Strength Score': '{:.0f}/100'
+                }),
+                use_container_width=True,
+                hide_index=True
             )
 
 # Detailed breakdown section
