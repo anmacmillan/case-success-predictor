@@ -28,10 +28,17 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
 <style>
+    /* Force light mode for consistency */
+    .stApp {
+        background-color: white;
+        color: #262730;
+    }
+
     .main-header {
         font-size: 2rem;
         font-weight: 600;
         margin-bottom: 0.5rem;
+        color: #262730;
     }
     .disclaimer {
         background: #fff3cd;
@@ -39,6 +46,10 @@ st.markdown("""
         padding: 1rem;
         margin: 1rem 0;
         border-radius: 4px;
+        color: #856404 !important;
+    }
+    .disclaimer strong {
+        color: #856404 !important;
     }
     .result-box {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
