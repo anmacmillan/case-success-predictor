@@ -99,9 +99,40 @@ HISTORICAL_RATES = {
     'Other Claims': 56.49
 }
 
+# Check for URL parameters
+query_params = st.query_params
+url_claim_type = query_params.get("claim_type", None)
+url_source = query_params.get("source", None)
+
+# Map URL parameter to claim type
+CLAIM_TYPE_MAP = {
+    "unfair_dismissal": "Unfair Dismissal",
+    "unfair_dismissal_conduct": "Unfair Dismissal",
+    "unfair_dismissal_capability": "Unfair Dismissal",
+    "unfair_dismissal_redundancy": "Unfair Dismissal",
+    "breach_contract": "Breach of Contract",
+    "disability_discrimination": "Disability Discrimination",
+    "direct_discrimination": "Sex Discrimination",  # Default to Sex, user can change
+    "indirect_discrimination": "Sex Discrimination",
+    "race_discrimination": "Race Discrimination",
+    "sex_discrimination": "Sex Discrimination",
+    "age_discrimination": "Age Discrimination",
+    "religion_discrimination": "Religion/Belief Discrimination",
+    "sexual_orientation": "Sexual Orientation Discrimination",
+    "equal_pay": "Equal Pay",
+    "whistleblowing": "Protected Disclosure (Whistleblowing)",
+    "wage_deduction": "Unlawful Deduction from Wages",
+    "redundancy_pay": "Redundancy Pay",
+    "working_time": "Working Time"
+}
+
 # Header
 st.markdown('<div class="main-header">📊 Employment Tribunal Case Success Predictor</div>', unsafe_allow_html=True)
 st.markdown("**4-Factor Weighted Model | Calibrated with Official ET Statistics**")
+
+# Show source if opened from external link
+if url_source:
+    st.info(f"📍 Opened from: {url_source}")
 
 # Disclaimer
 st.markdown("""
@@ -160,10 +191,21 @@ col1, col2 = st.columns([2, 1])
 with col1:
     st.markdown("## Case Details")
 
+    # Determine initial claim type from URL or default
+    initial_claim_type = CLAIM_TYPE_MAP.get(url_claim_type, "Unfair Dismissal") if url_claim_type else "Unfair Dismissal"
+
+    # Find index for pre-selection
+    sorted_claims = sorted(HISTORICAL_RATES.keys())
+    try:
+        initial_index = sorted_claims.index(initial_claim_type)
+    except ValueError:
+        initial_index = 0
+
     # Claim type selection
     claim_type = st.selectbox(
         "Primary Claim Type",
-        options=sorted(HISTORICAL_RATES.keys()),
+        options=sorted_claims,
+        index=initial_index,
         help="Select the primary cause of action. Historical success rate will automatically update.",
         key="claim_type_selector"
     )
@@ -388,6 +430,33 @@ with col2:
     st.markdown(f'<span class="metric-badge {strength_class}">{strength} Case</span>', unsafe_allow_html=True)
     st.caption(assessment)
 
+    # Link to Quantum Risk Tool
+    st.markdown("")  # Spacing
+    st.markdown("### 💰 Next Step: Settlement Analysis")
+    st.markdown(f"""
+Ready to calculate settlement range with Monte Carlo simulation?
+
+Use your predicted success rate (**{success_prob:.1f}%**) to model settlement scenarios and litigation risk.
+""")
+
+    quantum_url = f"https://www.alexmacmillan.co.uk/#quantum-risk-view?success_prob={success_prob:.1f}&source=Case%20Success%20Predictor"
+    st.markdown(f"""
+<div style="text-align: center; margin: 1.5rem 0;">
+    <a href="{quantum_url}" target="_blank"
+       style="display: inline-block;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              padding: 0.8rem 1.5rem;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 600;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+              transition: transform 0.2s, box-shadow 0.2s;">
+        💰 Calculate Settlement Range →
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
     st.markdown("---")
 
     # Factor breakdown
@@ -492,6 +561,48 @@ with tab1:
 
     **Final Prediction:** {success_prob:.1f}%
     """)
+
+    # Add LaTeX calculation explanation
+    st.markdown("---")
+    st.markdown("### 🔬 Calculation Transparency")
+
+    st.markdown("**Weighted Adjustment Formula:**")
+    st.latex(r"\text{P(Success)} = H + \sum_{i} \left(w_i \times \frac{\text{Score}_i - 50}{100}\right) \times 100")
+
+    st.markdown("**Where:**")
+    st.markdown(f"""
+    - H = Historical baseline = {historical_rate:.1f}%
+    - w_L = Limitation weight = {w_l:.3f}
+    - w_B = Legal Basis weight = {w_b:.3f}
+    - w_E = Evidence weight = {w_e:.3f}
+    """)
+
+    st.markdown("**With Actual Values:**")
+
+    # Calculate intermediate values for transparency
+    l_adjustment = ((score_L - 50) * w_l)
+    b_adjustment = ((score_B - 50) * w_b)
+    e_adjustment = ((score_E - 50) * w_e)
+
+    st.latex(
+        f"\\text{{P(Success)}} = {historical_rate:.1f} + " +
+        f"\\left({w_l:.3f} \\times \\frac{{{score_L} - 50}}{{100}} + " +
+        f"{w_b:.3f} \\times \\frac{{{score_B} - 50}}{{100}} + " +
+        f"{w_e:.3f} \\times \\frac{{{score_E} - 50}}{{100}}\\right) \\times 100"
+    )
+
+    st.latex(
+        f"\\text{{P(Success)}} = {historical_rate:.1f} + " +
+        f"({l_adjustment:.3f} + {b_adjustment:.3f} + {e_adjustment:.3f}) \\times 100"
+    )
+
+    st.latex(
+        f"\\text{{P(Success)}} = {historical_rate:.1f} + " +
+        f"{(l_adjustment + b_adjustment + e_adjustment) * 100:.1f} = " +
+        f"{success_prob:.1f}\\%"
+    )
+
+    st.caption("*This shows exactly how the historical baseline is adjusted by the weighted factors to arrive at the final prediction.*")
 
 with tab2:
     st.markdown("### Employment Tribunal Historical Success Rates")
