@@ -1,4 +1,3 @@
-app = "case-success-predictor"
 primary_region = "lhr"
 
 [build]
